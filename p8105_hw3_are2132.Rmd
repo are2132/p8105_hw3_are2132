@@ -1,0 +1,19 @@
+---
+title: "P8105 Homework 3"
+author: "Alison Elgass"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggridges)
+```
+
+# Problem 1
+```{r}
+library(p8105.datasets)
+data("instacart")
+```
+
