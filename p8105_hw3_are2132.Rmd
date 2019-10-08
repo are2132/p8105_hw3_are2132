@@ -11,6 +11,7 @@ library(p8105.datasets)
 ```
 
 # Problem 1
+
 First we load in the instacart data.
 ```{r}
 data("instacart")
@@ -18,7 +19,7 @@ data("instacart")
 
 This dataset represents a (non-random) sample of Instacart orders from 2017. The dataset has `r nrow(instacart)` rows, each of which represents one product from a specific order of a unique shopper. The data has `r ncol(instacart)` columns which give information about the specific item in each row. The variables `order_id`, `product_id`, and `user_id` identify the specific order number, product, and shopper, respectively. The variable `reordered` indicates if the shopper has previously ordered that item, in which case `reordered = 1`, otherwise `reordered = 0`. `order_number` indicates how many orders this shopper has made. Taking order #1 as an example, `order_number = 4` means that this shopper has made three orders in the past and this is their fourth. The variables `product_name` is self explanatory, and the variables `aisle`/`aisle_id` and `department`/`department_id` indicate where to find that product in the Instacart online market.  
 
-## Dang these Virual Aisles are Crowded
+## Dang these Virtual Aisles are Crowded
 ```{r }
 #create a tibble with top aisles, sorted by # items
 aisles_ranked = instacart %>%  
@@ -26,7 +27,8 @@ aisles_ranked = instacart %>%
 
 head(aisles_ranked) #display top few
 ```
-We created the tibble `aisles_ranked` (above) to explore the most popular aisles from the dataset. There are `r nrow(aisles_ranked)` different aisles in total, with the top six most popular shown above.
+  
+We created the tibble `aisles_ranked` (above) to explore the most popular aisles from the dataset. There are `r nrow(aisles_ranked)` different aisles in total, with the top six most popular shown above.  
 
 ```{r}
 #now make a plot of popular aisles
@@ -38,6 +40,9 @@ aisles_ranked %>%
   xlab("Aisle Name") + ylab("Number of Items Ordered") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+  
+Here we see a graph of the most popular aisles that have at least 10,000 orders. Just as we saw in our tibble, fresh vegetables and fresh fruits are by far the most popular aisles, with over 150,000 orders each. LaCroix lovers rejoice as sparkling water comes in hot at #6. Interestingly, soy & lactose free also makes the list as the #9 aisle overall.  
+
 
 ## If You Like Baking or Dogs or Produce
 
@@ -65,9 +70,11 @@ pvf_top3 = instacart %>%
 
 #now combine them all into 1 pretty table
 cbind(baking_top3, dog_top3, pvf_top3) %>% 
-  knitr::kable()
-
+  knitr::kable(caption = "Most Purchased Items 
+               from 3 Select Aisles")
 ```
+  
+This table is pretty self explanatory. Hopefully, though, nobody is trying to make a cake with just brown sugar, baking soda, and cane (white) sugar. Also props to the healthy eaters out there buying spinach and berries. Hooray for antioxidants.  
 
 ## Ice Cream >> Apples (at any time of the day)
 
@@ -98,13 +105,19 @@ coffee_all = instacart %>%
 rbind(distinct(apples_all), distinct(coffee_all)) %>% 
   pivot_wider(
     names_from = order_dow,
-    values_from = mean_time
+    values_from = mean_time,
+    names_prefix = "Day "
   ) %>% 
-  knitr::kable()
+  rename("Product" = "product_name") %>% 
+  knitr::kable(caption = "Average Hour of Purchase by Day for Pink Lady Apples & Coffee Ice Cream")
 
 ```
+  
+Overall it seems like people tend to buy pink lady apples slightly earlier in the day than coffee ice cream; the mean hour of purchase for the apples ranges approximately from 11-14 (11:00 AM - 2:00 PM), while the mean for the ice cream ranges from 12-15 (12:00 - 3:00 PM).  
+
 
 # Problem 2
+
 First we load in and tidy the BRFSS data.
 ```{r}
 data("brfss_smart2010")
@@ -123,20 +136,23 @@ brfss_health = brfss_smart2010 %>%
 
 str(pull(brfss_health,response)) #check factor levels
 
-
-  #filter(response %in% c("Poor", "Fair", "Good", "Very  good", "Excellent"))
-
 ```
 
-## Analysis
+## States Observed at 7+ Locations????????????
 ```{r}
 brfss_health %>% 
   filter(year == 2002) %>% 
   group_by(state) %>% 
   count(county) %>% 
+  #filter(n >= 7) %>% 
   view()
+```
+  
+^^I don't know what this means RIP!!!!!!!!!!!!!!!!!!  
 
-#create spaghetti plot
+
+## Spaghetti Plot of "Excellent" Values
+```{r}
 brfss_health %>% 
   filter(response == "Excellent") %>% 
   group_by(state, year) %>% 
@@ -148,11 +164,34 @@ brfss_health %>%
   distinct() %>%  #remove duplicate rows
   #plot it!
   ggplot(aes(x = year, y = avg_value_by_state)) + 
-  geom_line(aes(group = state))
-
+  geom_line(aes(group = state)) +
+  ggtitle("Average Data Value by State 2002-2010") +
+  xlab("Year") + ylab("Mean Data Value")
 
 ```
+  
+This plot shows the mean of the variable `data_value` aggregated across all the counties in a state, from the years 2002-2010. We see most values are clustered between 17 and 28, approximately. Overall the trends don't seem to have a particular pattern. Some states have large spikes up or down but for the most part they look random.   
 
+### Boxplot for Response Values in NY
+```{r}
+brfss_health %>%
+  filter(state == "NY",  #only NY locations, 2006 & 2010
+         year %in% c(2006, 2010)) %>% 
+  #now make a boxplot of data_value for each response level
+  ggplot(aes(x = response, y = data_value)) +
+  geom_boxplot() +
+  facet_grid(~year) + #2 panels: 2006 and 2010 
+  ggtitle("Distribution of Responses in NY, 2006 & 2010") +
+  xlab("Response") + ylab("Data Value") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+  
+This plot shows us the distribution of the variable `data_value` for each response category (poor - excellent) across all NY counties surveyed, in both 2006 and 2010. In both years, the distribution of "poor" responses has the narrowest range of values. Another similarity between 2006 and 2010 is that the median data values and their respective IQR's increase as the quality of life response increases from "poor" to "very good," with the biggest leap occuring between "fair" and "good." The box corresponding to the "very good" category is slightly higher in 2010 than in 2006, with a median value just above 35 in 2006 versus a median of about 33 in 2006.  
+In both 2006 and 2010, the "excellent" category has a significantly lower distribution of values compared to the two categories beneath it-- "good" and "very good." In 2006 the median value of the "excellent category is roughly 21, which is 12 points lower than the median of "very good" at 33. In 2010 the median value of the "excellent category is about 22, which is 14 points lower than the median of "very good" at 36.  
+
+
+# Problem 3
 
 
 
