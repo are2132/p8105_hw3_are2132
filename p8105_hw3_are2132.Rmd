@@ -5,15 +5,107 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(ggridges)
 ```
 
 # Problem 1
+First we load in the instacart data.
 ```{r}
 library(p8105.datasets)
 data("instacart")
 ```
+
+This dataset represents a (non-random) sample of Instacart orders from 2017. The dataset has `r nrow(instacart)` rows, each of which represents one product from a specific order of a unique shopper. The data has `r ncol(instacart)` columns which give information about the specific item in each row. The variables `order_id`, `product_id`, and `user_id` identify the specific order number, product, and shopper, respectively. The variable `reordered` indicates if the shopper has previously ordered that item, in which case `reordered = 1`, otherwise `reordered = 0`. `order_number` indicates how many orders this shopper has made. Taking order #1 as an example, `order_number = 4` means that this shopper has made three orders in the past and this is their fourth. The variables `product_name` is self explanatory, and the variables `aisle`/`aisle_id` and `department`/`department_id` indicate where to find that product in the Instacart online market.  
+
+## Dang these Virual Aisles are Crowded
+```{r }
+#create a tibble with top aisles, sorted by # items
+aisles_ranked = instacart %>%  
+  count(aisle, sort = TRUE, name = "n_items")
+
+head(aisles_ranked) #display top few
+```
+We created the tibble `aisles_ranked` (above) to explore the most popular aisles from the dataset. There are `r nrow(aisles_ranked)` different aisles in total, with the top six most popular shown above.
+
+```{r}
+#now make a plot of popular aisles
+aisles_ranked %>% 
+  filter(n_items > 10000) %>% 
+  ggplot(aes(x = reorder(aisle,-n_items), y = n_items)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Most Popular Instacart Shopping Aisles") +
+  xlab("Aisle Name") + ylab("Number of Items Ordered") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+## If You Like Baking or Dogs or Produce
+
+Next let's look at the top 3 most popular items in the following categories: baking ingredients, dog food, and packaged fruit & vegetables.
+```{r}
+#Sort baking aisle by count of items, then take top 3
+baking_top3 = instacart %>% 
+  filter(aisle == "baking ingredients") %>% 
+  count(product_name, sort = TRUE) %>% 
+  rename("Top Baking Items" = "product_name") %>% 
+  slice(1:3)
+
+#Do the same for dog & packaged fruit/veg aisles
+dog_top3 = instacart %>% 
+  filter(aisle == "dog food care") %>% 
+  count(product_name, sort = TRUE) %>% 
+  rename("Top Dog Food Care Items" = "product_name") %>% 
+  slice(1:3)
+
+pvf_top3 = instacart %>% 
+  filter(aisle == "packaged vegetables fruits") %>% 
+  count(product_name, sort = TRUE) %>% 
+  rename("Top Packaged Veggies & Fruit" = "product_name") %>% 
+  slice(1:3)
+
+#now combine them all into 1 pretty table
+cbind(baking_top3, dog_top3, pvf_top3) %>% 
+  knitr::kable()
+
+```
+
+## Ice Cream >> Apples (at any time of the day)
+
+Finally we make a table showing the average time of purchase for two items, pink lady apples and coffee ice cream, sorted by the day of the week they were purchased.
+```{r}
+#Find pink lady apple rows, group by day, find mean time
+apples_all = instacart %>% 
+  filter(product_name == "Pink Lady Apples") %>% 
+  arrange(order_dow) %>% 
+  group_by(order_dow) %>% #group by day of week
+  mutate( #take mean order time within each dow
+    mean_time = mean(order_hour_of_day)
+  ) %>% 
+  select(product_name, order_dow, mean_time)
+
+#Find coffee ice cream rows, group by day, find mean time
+coffee_all = instacart %>% 
+  filter(product_name == "Coffee Ice Cream") %>% 
+  arrange(order_dow) %>% 
+  group_by(order_dow) %>% #group by day of week
+  mutate( #take mean order time within each dow
+    mean_time = mean(order_hour_of_day)
+  ) %>% 
+  select(product_name, order_dow, mean_time)
+
+#Now take 7 unique rows in each (1 for each day of week)
+#then put the two 7x3 tables together, pivot to wide
+rbind(distinct(apples_all), distinct(coffee_all)) %>% 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_time
+  ) %>% 
+  knitr::kable()
+
+```
+
+
+
+
 
