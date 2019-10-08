@@ -139,14 +139,14 @@ brfss_health %>%
 #create spaghetti plot
 brfss_health %>% 
   filter(response == "Excellent") %>% 
-  group_by(state) %>% 
-  mutate(
+  group_by(state, year) %>% 
+  mutate(  #create variable for mean val by state, year
     avg_value_by_state = mean(data_value, na.rm = TRUE)
-  ) %>% 
+  ) %>%               
+  #now select only 3 relevant columns
   select(year, state, avg_value_by_state) %>%
-  distinct() %>% 
-  #view()
-
+  distinct() %>%  #remove duplicate rows
+  #plot it!
   ggplot(aes(x = year, y = avg_value_by_state)) + 
   geom_line(aes(group = state))
 
