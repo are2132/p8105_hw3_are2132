@@ -4,16 +4,15 @@ author: "Alison Elgass"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
-
+```{r setup, echo=FALSE}
 library(tidyverse)
 library(ggridges)
+library(p8105.datasets)
 ```
 
 # Problem 1
 First we load in the instacart data.
 ```{r}
-library(p8105.datasets)
 data("instacart")
 ```
 
@@ -77,22 +76,22 @@ Finally we make a table showing the average time of purchase for two items, pink
 #Find pink lady apple rows, group by day, find mean time
 apples_all = instacart %>% 
   filter(product_name == "Pink Lady Apples") %>% 
-  arrange(order_dow) %>% 
+  arrange(order_dow) %>%  #arrange for clarity
   group_by(order_dow) %>% #group by day of week
-  mutate( #take mean order time within each dow
+  mutate(        #take mean order time within each dow
     mean_time = mean(order_hour_of_day)
   ) %>% 
-  select(product_name, order_dow, mean_time)
+  select(product_name, order_dow, mean_time) #relevant 3
 
 #Find coffee ice cream rows, group by day, find mean time
 coffee_all = instacart %>% 
   filter(product_name == "Coffee Ice Cream") %>% 
-  arrange(order_dow) %>% 
+  arrange(order_dow) %>%  #arrange for clarity
   group_by(order_dow) %>% #group by day of week
-  mutate( #take mean order time within each dow
+  mutate(        #take mean order time within each dow
     mean_time = mean(order_hour_of_day)
   ) %>% 
-  select(product_name, order_dow, mean_time)
+  select(product_name, order_dow, mean_time) #relevant 3
 
 #Now take 7 unique rows in each (1 for each day of week)
 #then put the two 7x3 tables together, pivot to wide
@@ -102,6 +101,55 @@ rbind(distinct(apples_all), distinct(coffee_all)) %>%
     values_from = mean_time
   ) %>% 
   knitr::kable()
+
+```
+
+# Problem 2
+First we load in and tidy the BRFSS data.
+```{r}
+data("brfss_smart2010")
+  
+#create variable brfss_health with only 'overall health'
+brfss_health = brfss_smart2010 %>% 
+  janitor::clean_names() %>%
+  rename("state" = "locationabbr",
+         "county" = "locationdesc") %>% 
+  filter(topic == "Overall Health") %>% #only this topic 
+  mutate(                       #convert to ordered factor
+    response = factor(response, 
+                         c("Poor", "Fair", "Good",
+                           "Very good", "Excellent"))
+  )
+
+str(pull(brfss_health,response)) #check factor levels
+
+
+  #filter(response %in% c("Poor", "Fair", "Good", "Very  good", "Excellent"))
+
+```
+
+## Analysis
+```{r}
+brfss_health %>% 
+  filter(year == 2002) %>% 
+  group_by(state) %>% 
+  count(county) %>% 
+  view()
+
+#create spaghetti plot
+brfss_health %>% 
+  filter(response == "Excellent") %>% 
+  group_by(state) %>% 
+  mutate(
+    avg_value_by_state = mean(data_value, na.rm = TRUE)
+  ) %>% 
+  select(year, state, avg_value_by_state) %>%
+  distinct() %>% 
+  #view()
+
+  ggplot(aes(x = year, y = avg_value_by_state)) + 
+  geom_line(aes(group = state))
+
 
 ```
 
