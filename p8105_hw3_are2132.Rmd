@@ -20,7 +20,7 @@ data("instacart")
 This dataset represents a (non-random) sample of Instacart online grocery orders from 2017. The dataset has `r nrow(instacart)` rows, each of which represents one product from a specific order of a unique shopper. The data has `r ncol(instacart)` columns which give information about the specific item in each row. The variables `order_id`, `product_id`, and `user_id` identify the specific order number, product, and shopper, respectively. The variable `reordered` indicates if the shopper has previously ordered that item, in which case `reordered = 1`, otherwise `reordered = 0`. `order_number` indicates how many orders this shopper has made. Taking order #1 as an example, `order_number = 4` means that this shopper has made three orders in the past and this is their fourth. The variables `product_name` is self explanatory, and the variables `aisle`/`aisle_id` and `department`/`department_id` indicate where to find that product in the Instacart online market.  
 
 ## Dang these Virtual Aisles are Crowded
-```{r }
+```{r fig.width=12}
 #create a tibble with top aisles, sorted by # items
 aisles_ranked = instacart %>%  
   count(aisle, sort = TRUE, name = "n_items")
