@@ -216,10 +216,21 @@ acceler_data =
     minute = as.numeric(minute) #make minute a numeric var
   )
 
-head(acceler_data)
 ```
   
-This dataset gives the activity count as measured by the accelerometer for every minute over a 5 week period. We converted the original dataset from wide to long format, so that each row corresponds to one minute of measurement, with variables indicating the corresponding week number out of 5,  day number out of 35, and day of the week along with a new variable `day_type` indicating if the day is a weekday or weekend. The variable of interest `activity_count` gives the accelerometer's reading for that specific minute. Consequently, the final tidy dataset `acceler_data` has `r nrow(acceler_data)` rows, which is equal to 35 days x 24 hours x 60 minutes.  
+This dataset gives the activity count as measured by the accelerometer for every minute over a 5 week period. We converted the original dataset from wide to long format, so that each row corresponds to one minute of measurement, with variables indicating the corresponding week number out of 5,  day_id number out of 35**, and day of the week along with a new variable `day_type` indicating if the day is a weekday or weekend. The variable of interest `activity_count` gives the accelerometer's reading for that specific minute. Consequently, the final tidy dataset `acceler_data` has `r nrow(acceler_data)` rows, which is equal to 35 days x 24 hours x 60 minutes.  
+  
+**Note that the `day_id` variable does not indicate the order in which the days were observed, but rather each day's order in the dataset. If we want to rearrange the dataset in the order of time passing, we can as follows
+```{r}
+#Arrange by actual subsequent days
+acceler_data %>% 
+  mutate(
+    day = factor(day, c("Monday", "Tuesday", "Wednesday",
+                  "Thursday","Friday","Saturday","Sunday"))
+  ) %>% 
+  arrange(day)
+```
+In subsequent analyses we will use the original (but tidied) dataset which is in order of `day_id`.  
 
 ## Total Activity Per Day
 ```{r}
@@ -230,6 +241,7 @@ acceler_data %>%
     total_activity = sum(activity_count)
   ) %>% 
   knitr::kable(caption = "Total Activity Count Per Day")
+
 
 #now do the same process but make a line plot
 acceler_data %>% 
@@ -247,8 +259,8 @@ acceler_data %>%
     breaks = seq(0, 35, 5)
     ) +
   labs(
-    title = "Total Activity Trend Over 5 Weeks", 
-    x = "Day Number", 
+    title = "Total Activity Trends for 5 Weeks", 
+    x = "Day ID", 
     y = "Total Activity Count"
   ) +
   theme(plot.title = element_text(hjust = 0.5))
